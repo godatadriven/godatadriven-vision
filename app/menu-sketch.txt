@@ -1,0 +1,11 @@
+User-selectable options:
+
+- Image descriptor
+	- texture
+	- pixel values
+- Photometric representation
+	- intensity
+	- color
+- Sampling strategy
+	- dense
+	- keypoints

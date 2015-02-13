@@ -1,0 +1,13 @@
+- Depart from already existing VisualObjectMatcher class
+	- in addition to existing keypoint sampling strategies, invoke 'dense sampling' strategy
+	- add color: intensity + normalized rgb usually works well
+		- intensity only (I)
+		- color only (rg)
+		- intensity+color (Irg)
+	- make rotational invariance optional
+	- for inevitable future refactoring, consider separating image description, catalog matching and result combining 
+	- invoke spatial pyramid
+- Obtain data
+- Investigate the usefulness of metadata: perhaps it can serve as an additional info source for result ranking
+- Create a separate class for combining ranked results
+- Documentation, virtual env, etc
