@@ -2,10 +2,12 @@
 
 Rank your product catalog based on visual similarity to a query photo.
 
+<pre>
 godatadriven-vision
-|-app	(webapp stuff)
-|-lib	(core image processing and machine learning functionality plus associated utilities)
-|-proc	(example scripts using the stuff in lib/)
+|-app	webapp stuff
+|-lib	core image processing and machine learning functionality plus associated utilities
+|-proc	example scripts using the stuff in lib/
+</pre>
 
 # Setup
 
