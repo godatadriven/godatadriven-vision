@@ -27,34 +27,25 @@
 				<br>
 				<div class="row">
 					<div class="col-sm-12">
-						<h1>Sonepar Visual Recommender POC</h1>
+						<h1>GoDataDriven Visual Search</h1>
 					</div>
 				</div>
 				<div class="row">
 					<div class="col-sm-4">
-                                                <form method="POST" enctype="multipart/form-data" action="upload" id="submitForm">
-                                                	<h3>1. Select image</h3>
-                                                        <p><input type="file" name="photo"/><br/>
-							<h3>2. Select category</h3>
-							<select id="categorySelector" name="categorySelector">
-								<option value=""></option>
-								<option value="Sanitair">Sanitair</option>
-								<option value="Verwarming & klimaat">Verwarming & klimaat</option>
-								<option value="Verlichting">Verlichting</option>
-								<option value="Elektrotechniek">Electrotechniek</option>
-								<option value="Gereedschap">Gereedschap</option>
-								<option value="Consumentenproducten">Consumentenproducten</option>
-								<option value="Persoonlijke beschermingsmiddelen">Persoonlijke beschermingsmiddelen</option>
-							</select>
-							<h3>3. Click the button.</h3>
+                        <form method="POST" enctype="multipart/form-data" action="upload" id="submitForm">
+	                    	<h4>1. Select image</h4>
+	                        <p><input type="file" name="photo"/><br/>
+							<h4>2. Select settings </h4>
+							<input type="checkbox" name="grayscale" value="grayscale" checked> use grayscale<br>
+							<input type="checkbox" name="texture" value="texture" checked> apply texture<br>
+							<h4>3. Click the button</h4>
 							<input type="submit" name="uploadButton"value="Start matching"/> </p>
 							<input type="hidden" name="whichPage" id="whichPage" value="output" />
-                                                </form>  
+                        </form>  
 					</div>
 
 					<div class="col-sm-6">
-						<h3>Classification Output</h3>
-
+						<h4>Classification Output</h4>
 						<div ng-repeat="result in results">
 							<div class="row">
 								<div class="col-sm-2">
