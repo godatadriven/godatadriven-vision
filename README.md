@@ -103,7 +103,9 @@ From here you should now be able to repeat similar steps done in the mac tutoria
 
 ## Setup
 
-When everything has been properly installed you can run the app by telling flask to start running. From the `/app` directory: 
+When everything has been properly installed you can run the basic computer vision algorithms. 
+
+Once all this is done you only need to run the app to visualize the results. You start the the app by telling flask to start running. From the `/app` directory: 
 
 ```
 $ python app.py
