@@ -98,9 +98,15 @@ pip2.7 install virtualenv
 
 From here you should now be able to repeat similar steps done in the mac tutorial. 
 
-# Setup
+## Setup
 
-TODO
+When everything has been properly installed you can run the app by telling flask to start running. From the `/app` directory: 
+
+```
+$ python app.py
+```
+
+Then point your browser to ```localhost:1234```.
 
 # Method
 
