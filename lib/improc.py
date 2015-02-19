@@ -195,6 +195,8 @@ class VisualObjectMatcher(object):
 			if f is None:
 				print 'No features detected in', filename
 			return kp, f
+		else:
+			print filename, 'is None'
 		return None
 
 	# build a visual vocabulary by clustering the features from the given files
@@ -211,10 +213,13 @@ class VisualObjectMatcher(object):
 		num_feats = 0
 		for filename in filepaths:
 			# extract features
-			kp, f = self.extract_features_from_filename(filename, self.color)
-			if f is None or f.shape[0] == 0:
+			kp_f = self.extract_features_from_filename(filename, self.color)
+			if kp_f is None:
+				continue
+			elif kp_f[1].shape[0] == 0:
 				continue
 			# add to data matrix
+			f = kp_f[1]
 			idx = util.random_sample(f.shape[0], num_feats_per_file)
 			data[num_feats:num_feats+len(idx),:] = f[idx,:]
 			num_feats += len(idx)
@@ -391,7 +396,7 @@ class VisualObjectMatcher(object):
 
 
 class GDDImage(object):
-	SCALE = 0.5 # in (0,1]
+	SCALE = 0.25 # in (0,1]
 	COLOR2IDX = {'r':2,'g':1}
 	def __init__(self, filepath, color, crop=False):
 		setattr(self, 'color', color)

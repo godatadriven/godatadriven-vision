@@ -13,3 +13,11 @@
 - Investigate the usefulness of metadata: perhaps it can serve as an additional info source for result ranking
 - Create a separate class for combining ranked results
 - Documentation, virtual env, etc
+
+
+What is wrong with these images?
+- 416846_pb_01.jpg
+- 780410_pb_01.jpg
+- 781370_pb_01.jpg
+- 536819_pb_01.jpg
+- 344630_pb_01.jpg
