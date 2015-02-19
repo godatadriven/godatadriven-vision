@@ -2,28 +2,37 @@
 
 Rank your product catalog based on visual similarity to a query photo with our state-of- the-art-visualisation-starting-toolkit™. Just add water. 
 
+## Contents
+
+```
+godatadriven-vision
+|-app	flask webapp
+|-lib	core image processing 
+| 		machine learning functionality
+| 		associated utilities
+|-proc	example scripts using the stuff in lib/
+```
+
 ## Installation 
 
 ### Mac Installation 
 
 First make sure you follow all of the steps in [this link](http://www.jeffreythompson.org/blog/2013/08/22/update-installing-opencv-on-mac-mountain-lion/). This should ensure that opencv works. 
 
-Then create a new virtual environment. I am using the old school way of virtualenv, but you could also use virualenvwrapper. 
+Then create a new virtual environment in the rootfolder of this git repo. I am using the old school way of virtualenv, but you could also use virualenvwrapper. 
 
 ```
 virtualenv gdd_vision 
 source gdd_vision/bin/activate 
-pip install numpy 
-pip install pandas
-pip install mistune 
-pip install flask
-pip install flask-uploads
-pip install ipython[all]
-pip install pyzmq
-pip install tornado
 ```
 
-You can then confirm that the following code runs without errors:
+Next we need to make sure we have all the required pip-packages. 
+
+```
+pip install -r requirements.txt
+```
+
+After this install has completed you should be able to confirm that the following code runs without errors:
 
 ```
 (gdd_vision)$ python
@@ -39,12 +48,6 @@ You should also be able to do this in a python notebook.
 
 ```
 (gdd_vision)$ ipython notebook
-```
-
-You can exit this virtualenv by typing the following command: 
-
-```
-$ deactivate 
 ```
 
 ### Linux Installation 
@@ -94,14 +97,6 @@ pip2.7 install virtualenv
 ```
 
 From here you should now be able to repeat similar steps done in the mac tutorial. 
-
-
-<pre>
-godatadriven-vision
-|-app	webapp stuff
-|-lib	core image processing and machine learning functionality plus associated utilities
-|-proc	example scripts using the stuff in lib/
-</pre>
 
 # Setup
 
