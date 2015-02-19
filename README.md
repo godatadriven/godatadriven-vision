@@ -3,7 +3,7 @@
 
 Rank your product catalog based on visual similarity to a query photo with our state-of- the-art-visualisation-starting-toolkit™. Just add water. 
 
-![""](/app/static/images/vision.png)
+<img src="/app/static/images/vision.png" alt="" width="100%">
 
 ## Contents
 
