@@ -1,13 +1,14 @@
 # By Ivo Everts
 
 import cv2
-import numpy
+import numpy as np
 import os
 import json
-import pandas
+import pandas as pd
 import pickle
 import util
 import csv
+import pdb
 
 class VisualObjectMatcher(object):
 	"""
@@ -31,18 +32,18 @@ class VisualObjectMatcher(object):
 	# CLASS MEMBERS + DEFAULT VALUES													#
 	#####################################################################################
 	# NOTE: this is not pythonic
-	class_members = {'feat'						: 'SURF', 							# feature detection+extration, in {'ORB','SURF','SIFT'}
-					 'model'					: 'VLAD',							# image representation, in {'VLAD','BOW'}
-					 'k'						: 16,								# size of visual vocabulary, ORB+VLAD->4, SURF+VLAD->32, BOW->1000s
-					 'num_matches'				: 5,								# number of results to return per query image
-					 'base_folder'				: '/',								# base folder of the project on the file system
-					 'image_folder'				: '/',								# image folder relative to base folder
-					 'image_extension'			: 'jpg',							# image extension (used in experiments)
-					 'db_image_padding'			: 0,								# number of pixels to pad db images
-					 'query_image_padding'		: 0,								# number of pixels to pad query images
-					 'num_feats_for_codebook'	: 500000,							# number of features per cluster needed for creating a codebook
-					 'max_num_db_images'		: 1000,								# limit the number of db images used in an experiment
-					 'save_model'				: True}								# save models to model folder
+	class_members = {'color'					: 'I',			# photometric representation, in {'I','r','g'}
+					 'sampler'					: 'KP', 		# feature detection in {'KP','DE'} ({'KEYPOINT','DENSE'})
+					 'feat'						: 'SURF', 		# feature detection+extration, in {'ORB','SURF','SIFT','HIST'}
+					 'model'					: 'VLAD',		# image representation, in {'VLAD','BOW'}
+					 'k'						: 16,			# size of visual vocabulary, ORB+VLAD->4, SURF+VLAD->32, BOW->1000s
+					 'num_matches'				: 5,			# number of results to return per query image
+					 'base_folder'				: '/',			# base folder of the project on the file system
+					 'image_folder'				: '/',			# image folder relative to base folder
+					 'image_extension'			: 'jpg',		# image extension (used in experiments)
+					 'num_feats_for_codebook'	: 500000,		# number of features per cluster needed for creating a codebook
+					 'max_num_db_images'		: 1000,			# limit the number of db images used in an experiment
+					 'save_model'				: True}			# save models to model folder
 
 
 	#####################################################################################
@@ -96,7 +97,7 @@ class VisualObjectMatcher(object):
 	# it's a quicky ...
 	def match(self, query_filepath):
 		
-		query_descriptors, failures = self.describe_image_files([query_filepath], self.codebook, self.query_image_padding)
+		query_descriptors, failures = self.describe_image_files([query_filepath], self.codebook)
 		if sum(failures) > 0:
 			print 'No image representation created for', query_filepath
 			return None
@@ -105,15 +106,15 @@ class VisualObjectMatcher(object):
 		return self.export_results(matches, distances, [query_filepath], self.trainfiles, False)
 
 	def load_models(self):
-		codebook = numpy.load(self.base_folder + self.MODEL_FOLDER + self.codebook_string + '.npy')
-		traindata = numpy.load(self.base_folder + self.MODEL_FOLDER + self.signature + '.npy')
+		codebook = np.load(self.base_folder + self.MODEL_FOLDER + self.codebook_string + '.npy')
+		traindata = np.load(self.base_folder + self.MODEL_FOLDER + self.signature + '.npy')
 		trainfiles = pickle.load(open(self.base_folder + self.MODEL_FOLDER + self.signature,'r'))
 		return (codebook, traindata, trainfiles)
 
 	def save_models(self, codebook, db_descriptors, db_filepaths):
 		util.mkdir(self.base_folder + self.MODEL_FOLDER)
-		numpy.save(self.base_folder + self.MODEL_FOLDER + self.codebook_string, codebook)
-		numpy.save(self.base_folder + self.MODEL_FOLDER + self.signature, db_descriptors)
+		np.save(self.base_folder + self.MODEL_FOLDER + self.codebook_string, codebook)
+		np.save(self.base_folder + self.MODEL_FOLDER + self.signature, db_descriptors)
 		pickle.dump(db_filepaths, open(self.base_folder + self.MODEL_FOLDER + self.signature,'w'))
 
 	# run an experiment
@@ -128,7 +129,7 @@ class VisualObjectMatcher(object):
 		cb_file = self.base_folder + self.MODEL_FOLDER + self.codebook_string + '.npy'
 		codebook = None
 		if os.path.isfile(cb_file):
-			codebook = numpy.load(cb_file)
+			codebook = np.load(cb_file)
 			
 		# build model
 		codebook, db_descriptors, failures = self.build_model(db_filepaths, codebook)
@@ -142,17 +143,31 @@ class VisualObjectMatcher(object):
 	# detect and extract features in the given image
 	# kp: detected keypoints
 	# desc: descriptors, ensured to be of type float32 for distance computation
+	# hkp = []#self.harris.detect(image)
 	def extract_features_from_image(self, image):
-		kp = self.featd.detect(image)
-		hkp = []#self.harris.detect(image)
-		kp, f = self.featx.compute(image, kp+hkp)
+		# sample locations
+		if self.sampler == "KP":
+			# keypoint detector
+			kp = self.featd.detect(image.intensity_image)
+		else:
+			# dense sampling
+			kp = self.grid_samples(image.intensity_image.shape)
+		# hack: set angle to 0
+		for kp_ in kp:
+			kp_.angle = 0
+		# consider different descriptor types
+		if self.feat == "HIST":
+			f = self.histogram_descriptors_from_keypoints(kp, image.t_image)
+		else:
+			kp, f = self.featx.compute(image.intensity_image, kp)
+		# convert to convenient format
 		if f is not None:
-			f.astype(numpy.float32, copy=False)
+			f.astype(np.float32, copy=False)
 		return kp, f
 
 	# wrapper for reading an image and extracting keypoint descriptors
-	def extract_features_from_filename(self, filename, padding):
-		image = self.read_image(filename, padding)
+	def extract_features_from_filename(self, filename, color):
+		image = self.read_image(filename, color)
 		if image is not None:
 			kp, f = self.extract_features_from_image(image)
 			if f is None:
@@ -167,14 +182,14 @@ class VisualObjectMatcher(object):
 		# actual predicted number of features
 		num_feats_total = num_feats_per_file * len(filepaths)
 		# do once for determining feature dimension (and do not care that this is performed twice:)
-		kp, f = self.extract_features_from_filename(filepaths[0], self.db_image_padding)
+		kp, f = self.extract_features_from_filename(filepaths[0], self.color)
 		# init data matrix
-		data = numpy.empty([num_feats_total, f.shape[1]], dtype=float)
+		data = np.empty([num_feats_total, f.shape[1]], dtype=float)
 		# actual number of features
 		num_feats = 0
 		for filename in filepaths:
 			# extract features
-			kp, f = self.extract_features_from_filename(filename, self.db_image_padding)
+			kp, f = self.extract_features_from_filename(filename)
 			if f is None or f.shape[0] == 0:
 				continue
 			# add to data matrix
@@ -182,7 +197,7 @@ class VisualObjectMatcher(object):
 			data[num_feats:num_feats+len(idx),:] = f[idx,:]
 			num_feats += len(idx)
 		# return appropriate data
-		return numpy.float32(data[0:num_feats,:])
+		return np.float32(data[0:num_feats,:])
 
 	# create a codebook by clustering a matrix of features
 	def create_codebook(self, data):
@@ -202,30 +217,30 @@ class VisualObjectMatcher(object):
 		image_descriptor = None
 		# standard bag-of-words: project 
 		if self.model == 'BOW':
-			image_descriptor = numpy.histogram(cb_idx, range(0,self.k+1), density=True)[0]
+			image_descriptor = np.histogram(cb_idx, range(0,self.k+1), density=True)[0]
 		# store average element-wise distance to cluster centers
 		elif self.model == 'VLAD':
 			fdim = codebook.shape[1]
-			image_descriptor = numpy.zeros(self.k*fdim, dtype=float)
+			image_descriptor = np.zeros(self.k*fdim, dtype=float)
 			for k in range(0,self.k):
 				cb_f = f[cb_idx == k,:]
 				if cb_f.shape[0] > 0:
 					vlad_component = codebook[k,:] - cb_f.mean(axis=0)
-					image_descriptor[k*fdim:(k+1)*fdim] = vlad_component / numpy.linalg.norm(vlad_component)
+					image_descriptor[k*fdim:(k+1)*fdim] = vlad_component / np.linalg.norm(vlad_component)
 		else:
 			print 'Unknown model:', self.model
-		return image_descriptor / numpy.linalg.norm(image_descriptor)
+		return image_descriptor / np.linalg.norm(image_descriptor)
 
 	# create codebook descriptors for all given images
-	def describe_image_files(self, filepaths, codebook, padding):
+	def describe_image_files(self, filepaths, codebook):
 		dim = self.k
 		if self.model == 'VLAD':
 			dim = codebook.shape[0] * codebook.shape[1]
-		descriptors = numpy.zeros((len(filepaths),dim), dtype=float)
-		failures = numpy.zeros(descriptors.shape[0], dtype=bool)
+		descriptors = np.zeros((len(filepaths),dim), dtype=float)
+		failures = np.zeros(descriptors.shape[0], dtype=bool)
 		i = 0
 		for filepath in filepaths:
-			image = self.read_image(filepath, padding)
+			image = self.read_image(filepath, self.color)
 			if image is not None:
 				descriptor = self.describe_image(image, codebook)
 				if descriptor is not None:
@@ -249,7 +264,7 @@ class VisualObjectMatcher(object):
 			util.tstop()
 		# apply codebook to database
 		util.tstart('create database')
-		db_descriptors, failures = self.describe_image_files(db_filepaths, codebook, self.db_image_padding)
+		db_descriptors, failures = self.describe_image_files(db_filepaths, codebook)
 		util.tstop()
 		# return
 		return (codebook, db_descriptors, failures)
@@ -279,7 +294,7 @@ class VisualObjectMatcher(object):
 
 	def match_image_files(self, query_filepaths, codebook, db_descriptors, write_to_file=False, db_filepaths=None):
 		util.tstart('match_image_files')
-		query_descriptors, failures = self.describe_image_files(query_filepaths, codebook, self.query_image_padding)
+		query_descriptors, failures = self.describe_image_files(query_filepaths, codebook)
 		# stop if no features were found
 		if sum(failures) == len(query_filepaths):
 			return (None, None, None)
@@ -302,14 +317,12 @@ class VisualObjectMatcher(object):
 
 	# read an image from disk
 	@staticmethod
-	def read_image(filename, padding):
+	def read_image(filename, color):
 		print filename
-		image = cv2.imread(filename, VisualObjectMatcher.COLOR_MODE)
-		if image is not None:
-			image = cv2.resize(image, (0,0), fx=0.25, fy=0.25)
-			if padding > 0:
-				image = cv2.copyMakeBorder(image, padding, padding, padding, padding, cv2.BORDER_CONSTANT, value=[255])
-		return image
+		gdd_image = GDDImage(filename, color)
+		if gdd_image.ok:
+			return gdd_image
+		return None
 
 	# show an image and wait for key press
 	@staticmethod
@@ -324,12 +337,12 @@ class VisualObjectMatcher(object):
 	# note that this function assumes the dimensions to run along the rows
 	@staticmethod
 	def compute_distance_matrix(a, b):
-		aa = numpy.sum(a**2, axis=0)
-		bb = numpy.sum(b**2, axis=0)
-		ab = numpy.dot(a.T, b)
-		aa2 = numpy.repeat(aa.reshape([aa.size,1]), bb.size, axis=1)
-		bb2 = numpy.repeat(bb.reshape([1,bb.size]), aa.size, axis=0)
-		return numpy.sqrt(numpy.abs(aa2 + bb2 - 2*ab))
+		aa = np.sum(a**2, axis=0)
+		bb = np.sum(b**2, axis=0)
+		ab = np.dot(a.T, b)
+		aa2 = np.repeat(aa.reshape([aa.size,1]), bb.size, axis=1)
+		bb2 = np.repeat(bb.reshape([1,bb.size]), aa.size, axis=0)
+		return np.sqrt(np.abs(aa2 + bb2 - 2*ab))
 
 	# return the index in b of the row that is closest to each row in a 
 	# this is a custom 1-NN classifier
@@ -342,9 +355,9 @@ class VisualObjectMatcher(object):
 	@staticmethod
 	def flann_match(a, b, n):
 		flann = cv2.FlannBasedMatcher(dict(algorithm=0, trees=1), dict(checks=5))
-		matches = flann.knnMatch(a.astype(numpy.float32, copy=False), b.astype(numpy.float32, copy=False), k=n)
-		ms = numpy.zeros((a.shape[0],n), dtype=numpy.int32)
-		ds = numpy.zeros((a.shape[0],n), dtype=numpy.float32)
+		matches = flann.knnMatch(a.astype(np.float32, copy=False), b.astype(np.float32, copy=False), k=n)
+		ms = np.zeros((a.shape[0],n), dtype=np.int32)
+		ds = np.zeros((a.shape[0],n), dtype=np.float32)
 		i = 0
 		for match_set in matches:
 			j = 0
@@ -354,3 +367,34 @@ class VisualObjectMatcher(object):
 				j += 1
 			i += 1
 		return (ms, ds)
+
+
+class GDDImage(object):
+	SCALE = 0.5 # in (0,1]
+	COLOR2IDX = {'r':2,'g':1}
+	def __init__(self, filepath, color, crop=False):
+		setattr(self, 'color', color)
+		self.bgr_image = cv2.imread(filepath, cv2.IMREAD_COLOR)
+		if self.bgr_image is not None:
+			ok = True
+			if crop:
+				# ignore white pixels, which are usually omnipresent in catalog images
+				row, col, dim = np.where(np.logical_not(self.bgr_image==np.ones(self.bgr_image.shape,self.bgr_image.dtype)*255))
+				row = np.unique(np.concatenate((row[0:len(row):3],row[1:len(row):3],row[2:len(row):3])))
+				col = np.unique(np.concatenate((col[0:len(col):3],col[1:len(col):3],col[2:len(col):3])))
+				self.bgr_image = self.bgr_image[min(row)+1:max(row)-1,min(col)+1:max(col)-1,:]
+			# resize if applicable
+			if self.SCALE != 1:
+				self.bgr_image = cv2.resize(self.bgr_image, (0,0), fx=self.SCALE, fy=self.SCALE)
+			# keep intensity image
+			self.intensity_image = cv2.cvtColor(self.bgr_image, cv2.COLOR_BGR2GRAY)
+			# create color transformed image
+			if color == 'I':
+				# plain intensity
+				self.t_image = self.intensity_image.astype(np.float32, copy=False) / 255.
+			else:
+				# normalized red or green
+				self.t_image = self.bgr_image[:,:,self.COLOR2IDX[color]].astype(np.float32,copy=False) / np.sum(self.bgr_image,axis=2)
+		else:
+			ok = False
+		setattr(self, 'ok', ok)

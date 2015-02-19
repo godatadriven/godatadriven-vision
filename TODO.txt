@@ -5,7 +5,9 @@
 		- color only (rg)
 		- intensity+color (Irg)
 	- make rotational invariance optional
-	- for inevitable future refactoring, consider separating image description, catalog matching and result combining 
+		- read: disable for now
+	- separate image description, catalog matching and result combining
+		- every option combo results in a ranked list + distances: combine the distances of the several rankers to obtain the final result
 	- invoke spatial pyramid
 - Obtain data
 - Investigate the usefulness of metadata: perhaps it can serve as an additional info source for result ranking
