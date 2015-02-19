@@ -9,7 +9,7 @@ reload(ip)
 
 base_folder = '/Users/ivoeverts/data/wehkamp/';
 image_folder = 'img/'
-cropped_image_folder = 'img_cropped/'
+cropped_image_folder = 'img_cropped_test/'
 
 img_list = util.list_files(os.path.join(base_folder,image_folder),'jpg')
 

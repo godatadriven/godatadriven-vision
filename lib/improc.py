@@ -4,11 +4,8 @@ import cv2
 import numpy as np
 import os
 import json
-import pandas as pd
 import pickle
 import util
-import csv
-import pdb
 
 class VisualObjectMatcher(object):
 	"""
@@ -27,6 +24,11 @@ class VisualObjectMatcher(object):
 	MODEL_FOLDER 			= 'model/'
 	JSON_OUTPUT_FOLDER 		= 'rank-output/'
 
+	# number of bins for color histogram descriptors (set equal to SURF dimensionality)
+	FEATDIM 				= 64
+
+	# number of times that pixels are resampled for histogram construction
+	HISTREPEATS 			= 10
 
 	#####################################################################################
 	# CLASS MEMBERS + DEFAULT VALUES													#
@@ -80,18 +82,23 @@ class VisualObjectMatcher(object):
 			setattr(self, class_member, value)
 		
 		# strings of parameter settings
-		self.codebook_string = self.feat + str(self.k)
+		self.codebook_string = self.color + self.feat + str(self.k)
 		self.signature = self.codebook_string + self.model
 		self.param_string = '_D' + str(self.max_num_db_images) + \
 							'_M' + str(self.num_matches) + \
 							'_'  + self.signature
 
-		# set feature extractor
-		self.featd = cv2.FeatureDetector_create(self.feat)
-		# hack: always use harris
-		# todo: use multiple feature detectors
-		self.harris = cv2.FeatureDetector_create('HARRIS')
-		self.featx = cv2.DescriptorExtractor_create(self.feat)
+		if self.feat!='HIST':
+			# set feature detector+extractor
+			self.featd = cv2.FeatureDetector_create(self.feat)
+			self.featx = cv2.DescriptorExtractor_create(self.feat)
+			# hack: always use harris
+			# todo: use multiple feature detectors
+			# self.harris = cv2.FeatureDetector_create('HARRIS')
+		else:
+			# custom sampling+representation for color histograms
+			self.featd = None
+			self.featx = None
 
 	# api call for matching one file
 	# it's a quicky ...
@@ -146,24 +153,39 @@ class VisualObjectMatcher(object):
 	# hkp = []#self.harris.detect(image)
 	def extract_features_from_image(self, image):
 		# sample locations
-		if self.sampler == "KP":
-			# keypoint detector
-			kp = self.featd.detect(image.intensity_image)
+		if self.feat!='HIST':
+			if self.sampler == 'KP':
+				# keypoint detector
+				kp = self.featd.detect(image.intensity_image)
+			else:
+				# dense sampling
+				kp = self.grid_samples(image.intensity_image.shape)
 		else:
-			# dense sampling
-			kp = self.grid_samples(image.intensity_image.shape)
+			kp = []
 		# hack: set angle to 0
 		for kp_ in kp:
 			kp_.angle = 0
 		# consider different descriptor types
-		if self.feat == "HIST":
-			f = self.histogram_descriptors_from_keypoints(kp, image.t_image)
+		if self.feat == 'HIST':
+			kp, f = self.histogram_descriptors_from_keypoints(image, kp)
 		else:
-			kp, f = self.featx.compute(image.intensity_image, kp)
+			#VisualObjectMatcher.show_image((image.t_image*255).astype(np.uint8))
+			kp, f = self.featx.compute((image.t_image*255).astype(np.uint8), kp)
 		# convert to convenient format
 		if f is not None:
 			f.astype(np.float32, copy=False)
 		return kp, f
+
+	# extract histogram descriptors around the given keypoints
+	# version 0.1: ignore keypoints and build a couple of histograms by repetetive resampling
+	def histogram_descriptors_from_keypoints(self, gdd_image, kp):
+		pixels = gdd_image.t_image[gdd_image.rows,gdd_image.cols]
+		sample_size = min(pixels.size, self.FEATDIM*1000)
+		descriptors = np.zeros((self.HISTREPEATS,self.FEATDIM/2.), dtype=np.float32)
+		for i in range(0, self.HISTREPEATS):
+			idx = util.random_sample(pixels.size, sample_size)
+			descriptors[i,:] = np.histogram(pixels[idx], self.FEATDIM/2., (0,1))[0]
+		return kp, descriptors
 
 	# wrapper for reading an image and extracting keypoint descriptors
 	def extract_features_from_filename(self, filename, color):
@@ -189,7 +211,7 @@ class VisualObjectMatcher(object):
 		num_feats = 0
 		for filename in filepaths:
 			# extract features
-			kp, f = self.extract_features_from_filename(filename)
+			kp, f = self.extract_features_from_filename(filename, self.color)
 			if f is None or f.shape[0] == 0:
 				continue
 			# add to data matrix
@@ -318,7 +340,6 @@ class VisualObjectMatcher(object):
 	# read an image from disk
 	@staticmethod
 	def read_image(filename, color):
-		print filename
 		gdd_image = GDDImage(filename, color)
 		if gdd_image.ok:
 			return gdd_image
@@ -379,13 +400,15 @@ class GDDImage(object):
 			ok = True
 			if crop:
 				# ignore white pixels, which are usually omnipresent in catalog images
-				row, col, dim = np.where(np.logical_not(self.bgr_image==np.ones(self.bgr_image.shape,self.bgr_image.dtype)*255))
+				row, col = self.white_mask(self.bgr_image)
 				row = np.unique(np.concatenate((row[0:len(row):3],row[1:len(row):3],row[2:len(row):3])))
 				col = np.unique(np.concatenate((col[0:len(col):3],col[1:len(col):3],col[2:len(col):3])))
 				self.bgr_image = self.bgr_image[min(row)+1:max(row)-1,min(col)+1:max(col)-1,:]
 			# resize if applicable
 			if self.SCALE != 1:
 				self.bgr_image = cv2.resize(self.bgr_image, (0,0), fx=self.SCALE, fy=self.SCALE)
+			# store mask of non-white pixels
+			self.rows, self.cols = self.white_mask(self.bgr_image)
 			# keep intensity image
 			self.intensity_image = cv2.cvtColor(self.bgr_image, cv2.COLOR_BGR2GRAY)
 			# create color transformed image
@@ -398,3 +421,7 @@ class GDDImage(object):
 		else:
 			ok = False
 		setattr(self, 'ok', ok)
+
+	@staticmethod
+	def white_mask(color_image_uint8):
+		return np.where(np.logical_not(np.sum(color_image_uint8,axis=2)==np.ones((color_image_uint8.shape[0],color_image_uint8.shape[1]),np.uint16)*255*3))
