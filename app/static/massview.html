@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+
+	<head>
+		<link rel="stylesheet" href="/static/css/bootstrap.css">
+		<link rel="stylesheet" href="/static/css/font-awesome.css">
+		<link rel="stylesheet" href="/static/css/datepicker3.css">
+		<link rel="stylesheet" href="/static/css/nv.d3.min.css">
+		<link rel="stylesheet" href="/static/css/jquery-ui-1.10.4.min.css">
+		<link rel="stylesheet" href="/static/css/app.css">
+		<script type="text/javascript" src="static/js/jquery.js"></script>
+		<script type="text/javascript" src="static/js/d3.min.js"></script>
+		<script type="text/javascript" src="static/js/nv.d3.min.js"></script>
+		<script type="text/javascript" src="static/js/jquery-ui-1.10.4.min.js"></script>
+		<script type="text/javascript" src="static/js/angular.js"></script>
+		<script type="text/javascript" src="static/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="static/js/bootstrap-datepicker.js"></script>
+		<script type="text/javascript" src="static/js/massview_app.js"></script>
+	</head>
+
+	<body>
+		<div ng-app="api">
+			<div ng-controller="VisionResults" class="container">
+				<br>
+				<a href="/">Back to Main.</a>
+				<br>
+				<div class="row">
+					<div class="col-sm-12">
+						<h1>Sonepar Visual Recommender POC</h1>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-2">
+						<h3>Select</h3>
+
+						<h5>Select Version</h5>
+						<select ng-model="output_file" ng-options="d.name for d in output_files" class="form-control"></select>
+
+						<h5>Press the Button</h5>
+						<button type="button" class="btn btn-default pull-right" ng-click="retreiveOutput()">Go!</button>
+					</div>
+
+					<div class="col-sm-10">
+						<h3>Classification Output</h3>
+
+						<div ng-repeat="result in results">
+							<div class="row">
+								<div class="col-sm-12">
+									<h4>{{result.category.productklasse + " :: " + result.match_score}}</h4>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-sm-2">
+									<img src="{{result.filename}}" width="100%"alt="">
+								</div>
+								<div class="col-sm-2" ng-repeat="acc in result.results">
+									<img src="{{acc.filename}}" width="100%" alt="">
+									<p align="center" class="match{{acc.match_level}}">{{acc.category.productklasse}}</p>
+								</div>
+							</div><hr>
+						</div>
+
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

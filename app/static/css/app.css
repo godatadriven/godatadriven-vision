@@ -1,0 +1,16 @@
+.table-responsive{
+    overflow-x: auto;
+}
+
+blockquote{
+	font-size: 12px;
+}
+
+p.match0 {
+	color: gray;
+}
+
+p.match1 {
+	color: green;
+	font-weight: bold;
+}

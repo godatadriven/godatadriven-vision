@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+
+	<head>
+		<link rel="stylesheet" href="/static/css/bootstrap.css">
+		<link rel="stylesheet" href="/static/css/font-awesome.css">
+		<link rel="stylesheet" href="/static/css/datepicker3.css">
+		<link rel="stylesheet" href="/static/css/nv.d3.min.css">
+		<link rel="stylesheet" href="/static/css/jquery-ui-1.10.4.min.css">
+		<link rel="stylesheet" href="/static/css/app.css">
+		<script type="text/javascript" src="static/js/jquery.js"></script>
+		<script type="text/javascript" src="static/js/d3.min.js"></script>
+		<script type="text/javascript" src="static/js/nv.d3.min.js"></script>
+		<script type="text/javascript" src="static/js/jquery-ui-1.10.4.min.js"></script>
+		<script type="text/javascript" src="static/js/angular.js"></script>
+		<script type="text/javascript" src="static/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="static/js/bootstrap-datepicker.js"></script>
+		<script type="text/javascript" src="static/js/app.js"></script>
+		<script type="text/javascript" src="static/js/upload_app.js"></script>
+	</head>
+
+	<body>
+		<div ng-app="api">
+			<div ng-controller="OutputResults" class="container">
+				<br>
+				<a href="/">Back to Main.</a>
+				<br>
+				<div class="row">
+					<div class="col-sm-12">
+						<h1>Sonepar Visual Recommender POC</h1>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-4">
+                                                <form method="POST" enctype="multipart/form-data" action="upload" id="submitForm">
+                                                	<h3>1. Select image</h3>
+                                                        <p><input type="file" name="photo"/><br/>
+							<h3>2. Select category</h3>
+							<select id="categorySelector" name="categorySelector">
+								<option value=""></option>
+								<option value="Sanitair">Sanitair</option>
+								<option value="Verwarming & klimaat">Verwarming & klimaat</option>
+								<option value="Verlichting">Verlichting</option>
+								<option value="Elektrotechniek">Electrotechniek</option>
+								<option value="Gereedschap">Gereedschap</option>
+								<option value="Consumentenproducten">Consumentenproducten</option>
+								<option value="Persoonlijke beschermingsmiddelen">Persoonlijke beschermingsmiddelen</option>
+							</select>
+							<h3>3. Click the button.</h3>
+							<input type="submit" name="uploadButton"value="Start matching"/> </p>
+							<input type="hidden" name="whichPage" id="whichPage" value="output" />
+                                                </form>  
+					</div>
+
+					<div class="col-sm-6">
+						<h3>Classification Output</h3>
+
+						<div ng-repeat="result in results">
+							<div class="row">
+								<div class="col-sm-2">
+									<h4>Uploaded image</h4>
+									<img src="{{result.filename}}" width="100%"alt="">
+								</div>
+								<div class="col-sm-10">
+									<h4>Results</h4>
+								</div>
+								<div ng-repeat="acc in result.results">
+									<div class="col-sm-2">
+										<img src="{{acc.filename}}" width="100%" alt="">
+									</div>
+								</div>
+							</div><br>
+						</div>
+
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
