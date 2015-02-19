@@ -1,7 +1,7 @@
 # Visual search with python+OpenCV
 
 
-Rank your product catalog based on visual similarity to a query photo with our state-of- the-art-visualisation-starting-toolkit™. Just add water. 
+Rank your product catalog based on visual similarity to a query photo with our state-of-the-art-visualisation-starting-toolkit™. Just add water. 
 
 <img src="/app/static/images/vision.png" alt="" width="100%">
 
@@ -10,6 +10,7 @@ Rank your product catalog based on visual similarity to a query photo with our s
 ```
 godatadriven-vision
 |-app	flask webapp
+|-data	example images and models (in img/ and model/)
 |-lib	core image processing 
 | 		machine learning functionality
 | 		associated utilities
@@ -116,8 +117,8 @@ Then point your browser to ```localhost:1234```.
 # Method
 
 - Several options are considered:
-	- dense / keypoint sampling (in the intensity image)
-	- photometric representation: color / intensity (where color is normalized red and green)
-		- the method should be repeated per image channel, for now
 	- texture / pixel values
-- Ranking proceeds by combining the ranks of every option combo
+		- SURF / HIST
+	- photometric representation: color / intensity (where color is normalized red and green)
+		- I / r / g
+- TODO: combining the ranks of every option combo

@@ -1,3 +1,5 @@
+(this is old but should be considered when taking next steps)
+
 - Depart from already existing VisualObjectMatcher class
 	- in addition to existing keypoint sampling strategies, invoke 'dense sampling' strategy
 	- add color: intensity + normalized rgb usually works well

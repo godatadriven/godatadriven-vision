@@ -10,16 +10,12 @@ import util
 class VisualObjectMatcher(object):
 	"""
 	This class can be used to create and/or invoke models for visual object matching.
-	Experiments and production mixed up!
 	"""
 
 	#####################################################################################
 	# GENERAL SETTINGS																	#
 	#####################################################################################
 
-	# grayscale or color images
-	COLOR_MODE 				= cv2.IMREAD_GRAYSCALE # CV_LOAD_IMAGE_COLOR
-	
 	# file paths + naming
 	MODEL_FOLDER 			= 'model/'
 	JSON_OUTPUT_FOLDER 		= 'rank-output/'
@@ -40,8 +36,8 @@ class VisualObjectMatcher(object):
 					 'model'					: 'VLAD',		# image representation, in {'VLAD','BOW'}
 					 'k'						: 16,			# size of visual vocabulary, ORB+VLAD->4, SURF+VLAD->32, BOW->1000s
 					 'num_matches'				: 5,			# number of results to return per query image
-					 'base_folder'				: '/',			# base folder of the project on the file system
-					 'image_folder'				: '/',			# image folder relative to base folder
+					 'base_folder'				: '../',		# base folder of the project on the file system
+					 'image_folder'				: 'img/',		# image folder relative to base folder
 					 'image_extension'			: 'jpg',		# image extension (used in experiments)
 					 'num_feats_for_codebook'	: 500000,		# number of features per cluster needed for creating a codebook
 					 'max_num_db_images'		: 1000,			# limit the number of db images used in an experiment
@@ -234,6 +230,7 @@ class VisualObjectMatcher(object):
 
 	# create codebook descriptor by projecting image features on codebook
 	def describe_image(self, image, codebook):
+		# color/texture
 		kp, f = self.extract_features_from_image(image)
 		
 		# return None if no features were found
