@@ -1,5 +1,7 @@
 # Visual search with python+OpenCV
 
+![](/app/static/images/vision.png)
+
 Rank your product catalog based on visual similarity to a query photo with our state-of- the-art-visualisation-starting-toolkit™. Just add water. 
 
 ## Contents
