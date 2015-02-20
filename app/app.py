@@ -11,6 +11,11 @@ app.config['UPLOADED_IMAGES_DEST'] = "static/images/uploads"
 images = UploadSet('images', IMAGES)
 configure_uploads(app, (images,))
 
+opts = {'base_folder':'/Users/ivoeverts/data/wehkamp/',
+        'feat':'SURF',  # SURF or HIST
+        'color':'I',    # I or r or g
+        'k':32}         # small (4) for simple images, large (32) for complex images
+
 @app.route("/")
 def root():
     return app.send_static_file("index.html")
@@ -24,9 +29,8 @@ def upload():
         print(request.form.get("texture"))
         filename = images.save(request.files['photo'])
         proj_path = os.path.dirname(os.path.realpath(__file__)).replace("flask","")
-        prd_args = {'base_folder': proj_path,'query_image_padding':50,'query_image_folder':'uploads'}
-        prd = VisualObjectMatcher(prd_args, False)
-        res = prd.match(proj_path + 'flask/static/images/uploads/' + filename)
+        prd = VisualObjectMatcher(opts, True)
+        res = prd.match(proj_path + '/static/images/uploads/' + filename)
         f = open('workfile', 'w')
         f.write(str(res))
         f.close()

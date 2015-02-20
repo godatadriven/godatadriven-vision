@@ -100,6 +100,7 @@ class VisualObjectMatcher(object):
 	# it's a quicky ...
 	def match(self, query_filepath):
 		
+		print query_filepath
 		query_descriptors, failures = self.describe_image_files([query_filepath], self.codebook)
 		if sum(failures) > 0:
 			print 'No image representation created for', query_filepath

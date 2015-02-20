@@ -1,2 +1,4 @@
 lib/*.pyc
 gdd_vision/*
+app/static/images/uploads/*
+app/workfile
